@@ -3,76 +3,77 @@ import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Input, InputGroup, InputRightElement } from "@chakra-ui/input";
 import { VStack } from "@chakra-ui/layout";
 import { useState } from "react";
-// import axios from "axios";
+import axios from "axios";
 import { useToast } from "@chakra-ui/react";
-// import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 // import { ChatState } from "../../Context/ChatProvider";
 
 const Login = () => {
   const [show, setShow] = useState(false);
   const handleClick = () => setShow(!show);
-  // const toast = useToast();
+  const toast = useToast();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [loading, setLoading] = useState(false);
 
-  // const history = useHistory();
+  const Navigate = useNavigate();
   // const { setUser } = ChatState();
 
-  // const submitHandler = async () => {
-  //   setLoading(true);
-  //   if (!email || !password) {
-  //     toast({
-  //       title: "Please Fill all the Feilds",
-  //       status: "warning",
-  //       duration: 5000,
-  //       isClosable: true,
-  //       position: "bottom",
-  //     });
-  //     setLoading(false);
-  //     return;
-  //   }
+  const submitHandler = async () => {
+    setLoading(true);
+    if (!email || !password) {
+      toast({
+        title: "Please Fill all the Feilds",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom"
+      });
+      setLoading(false);
+      return;
+    }
 
-  //   try {
-  //     const config = {
-  //       headers: {
-  //         "Content-type": "application/json",
-  //       },
-  //     };
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json"
+        }
+      };
 
-  //     const { data } = await axios.post(
-  //       "/api/user/login",
-  //       { email, password },
-  //       config
-  //     );
+      const { data } = await axios.post(
+        "http://localhost:5000/api/users/login",
+        { email, password },
+        config
+      );
 
-  //     toast({
-  //       title: "Login Successful",
-  //       status: "success",
-  //       duration: 5000,
-  //       isClosable: true,
-  //       position: "bottom",
-  //     });
-  //     setUser(data);
-  //     localStorage.setItem("userInfo", JSON.stringify(data));
-  //     setLoading(false);
-  //     history.push("/chats");
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error Occured!",
-  //       description: error.response.data.message,
-  //       status: "error",
-  //       duration: 5000,
-  //       isClosable: true,
-  //       position: "bottom",
-  //     });
-  //     setLoading(false);
-  //   }
-  // };
-
-  const submitHandler = ()=>{
-
+      toast({
+        title: "Login Successful",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom"
+      });
+      // setUser(data);
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setLoading(false);
+      Navigate("/chats");
+    } catch (e) {
+      console.log(e);
+      toast({
+        title: `${e.message}`,
+        description: e.response.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom"
+      });
+      setLoading(false);
+    }
   };
+
+  // const submitHandler = ()=>{
+
+  // };
 
   return (
     <VStack spacing="10px">
@@ -82,7 +83,7 @@ const Login = () => {
           value={email}
           type="email"
           placeholder="Enter Your Email Address"
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
         />
       </FormControl>
       <FormControl id="password" isRequired>
@@ -90,7 +91,7 @@ const Login = () => {
         <InputGroup size="md">
           <Input
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             type={show ? "text" : "password"}
             placeholder="Enter password"
           />

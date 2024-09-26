@@ -1,38 +1,73 @@
-const asyncHandler=require("express-async-handler");
-const User=require("../models/userModel")
+const asyncHandler = require("express-async-handler");
+const User = require("../models/userModel");
+const generateToken = require("../config/generateToken");
 
-const registerUSer=asyncHandler(async(req,res)=>{
-    const {name, email, pic, password}=req.body;
+const registerUser = asyncHandler(async (req, res) => {
+  const { name, email, pic, password } = req.body;
 
-    if(!name || !email || !password){
-        res.status(400);
-        throw new Error("Please Enter all the fields!!");
+  if (!name || !email || !password) {
+    res.status(400);
+    throw new Error("Please Enter all the fields!!");
+  }
 
-    }
+  const userExists = await User.findOne({ email });
 
-    const userExists = await User.findOne({email});
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already Registered!");
+  }
 
-    if(userExists){
-        res.status(400);
-        throw new Error("User already Registered!");
-    }
+  const user = await User.create({
+    name,
+    email,
+    password,
+    pic
+  });
 
-    const user=await User.create({
-        name, email, password, pic,
+  if (user) {
+    res.status(201).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      pic: user.pic,
+      token: generateToken(user._id)
     });
-
-    if(user){
-        res.status(201).json({
-            _id: user.id,
-            name: user.name,
-            email: user.email,
-            pic: user.pic,
-        })
-    }
-    else{
-        res.status(400);
-        throw new Error("Failed to register user! Please try again");
-    }
+  } else {
+    res.status(400);
+    throw new Error("Failed to register user! Please try again");
+  }
 });
 
-module.exports={registerUSer};
+const authUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (user && (await user.matchPassword(password))) {
+    res.status(201).json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      pic: user.pic,
+      token: generateToken(user._id)
+    });
+  } else {
+    res.status(410);
+    throw new Error("user not found or incorrect password");
+  }
+});
+
+const allUsers = asyncHandler(async (req, res) => {
+  const keyword=req.query.search?{
+    $or: [
+      { name: { $regex: req.query.search, $options: "i" } },
+      { email: { $regex: req.query.search, $options: "i" } }
+    ]
+  }:{};
+
+  const users=await User.find(keyword).find({_id:{$ne: req.user.id}});
+  // console.log()
+
+  res.send(users);
+})
+
+module.exports = { registerUser, authUser, allUsers };
